@@ -3,6 +3,16 @@ include 'wp-config.php';
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
+
+global $wpdb;
+if(current_user_can( 'manage_options' ) ) {
+
+} else {
+
+    echo "<center><h2>You can not access this page</h2></center>";
+   die();
+}
+
 if(isset($_POST['submitdfhdfgd'])) 
     {
         
@@ -12,7 +22,7 @@ if(isset($_POST['submitdfhdfgd']))
         $file = fopen($_FILES['csvfile']['tmp_name'],"r");
         $key=0;
         $headerLine = true;
-        global $wpdb;
+      
         while(($affiliate_data =fgetcsv($file, 1000, ",")) !== FALSE)
         {
 
@@ -122,11 +132,6 @@ if(isset($_POST['submitdfhdfgd']))
                         }
                 
                            
-
-                        //     $sql_data = "INSERT INTO ".$wpdb->prefix."uap_mlm_relations
-						// 	(`affiliate_id`,`parent_affiliate_id`) 
-						// 	values ($affiliate_id, $refid)";
-						//    $wpdb->query($sql_data);
                       
                     }
 
@@ -181,7 +186,20 @@ if(isset($_POST['submitdfhdfgd']))
                     {
                         $make_upline_refferal  = "INSERT INTO ".$wpdb->prefix."uap_affiliate_referral_users_relations SET affiliate_id='$user_id',referral_wp_uid='$upline_user_id',DATE='$date'";
                         $wpdb->query($make_upline_refferal);
+
+                        
                     }
+
+
+                    // $selectgsd = "SELECT * from `".$wpdb->prefix."uap_affiliates` WHERE `uid`='$user_id'";
+                    // $affiliate_result = $wpdb->get_results($selectgsd,ARRAY_A);
+                    // if(count($affiliate_result) > 0)
+                    // {
+                    //     $sql_data = "INSERT INTO ".$wpdb->prefix."uap_mlm_relations
+                    //     (`affiliate_id`,`parent_affiliate_id`) 
+                    //     values ($affiliate_id, $refid)";
+                    //    $wpdb->query($sql_data);
+                    // }
                 
                 }
                 
@@ -193,6 +211,11 @@ if(isset($_POST['submitdfhdfgd']))
     fclose($file);
 
 
+    ?>
+      <script>
+        alert("Affiliate Imported Successfully.");
+    </script>
+    <?php
     }
 
     ?>
