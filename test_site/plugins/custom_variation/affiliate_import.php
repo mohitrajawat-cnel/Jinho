@@ -28,6 +28,10 @@ if(isset($_POST['submitdfhdfgd']))
 
             if($headerLine) { $headerLine = false; }
             else {
+
+                
+                    $meta = array();
+
                     $affiliate_id='';
                     $user_login='';
                     $name='';
@@ -41,6 +45,8 @@ if(isset($_POST['submitdfhdfgd']))
                     $wp_role='';
                     $affiliate_since='';
                     $upline='';
+
+                    
                     
                     $affiliate_id = $affiliate_data[0];
                     $user_login = $affiliate_data[1];
@@ -55,6 +61,12 @@ if(isset($_POST['submitdfhdfgd']))
                     $affiliate_since = $affiliate_data[10];
                     $upline = $affiliate_data[11];
 
+                    if($user_login == '' || $name == '' || !is_numeric($user_login))
+                    {
+                        continue;
+                    }
+
+                  
                     if($rank == 'Member')
                     {
                         $rank_id = 1;
@@ -76,12 +88,8 @@ if(isset($_POST['submitdfhdfgd']))
                         $rank_id =5;
                     }
 
-             
-
                     $user_password = "Testuserhwe@1".$key.rand(10,1000);
-
                     preg_match_all('!\d+!', $upline, $upline_id);
-
                     $upline_idhwe1=0;
                     foreach($upline_id as $upline_idhwe4)
                     {
@@ -91,14 +99,25 @@ if(isset($_POST['submitdfhdfgd']))
                         
                     }
 
-                   
+                    $get_country_code = substr($user_login, 0, 2);
+                    $phone_number = substr($user_login, 2);
+
+                    $country_code = "+".$get_country_code;
+                    $digits_phone = "+".$user_login;
+
+
                     $meta = array(
                         'first_name' => $name,
                         'user_login' => $user_login,
                         'affiliate_id' => (int)$affiliate_id,
-                        "affiliate_upline_id" =>(int)$upline_idhwe1
+                        "affiliate_upline_id" =>(int)$upline_idhwe1,
+                        "digits_phone"=>$digits_phone,
+                        "digt_countrycode"=>$country_code,
+                        "digits_phone_no"=>$phone_number
                     );
-                    
+
+                  
+                   
                     $check_user_register = "SELECT * from ".$wpdb->prefix."users where user_login='$user_login'";
                     $count_users = $wpdb->get_results($check_user_register,ARRAY_A);
                     if(count($count_users) <= 0)
@@ -113,6 +132,8 @@ if(isset($_POST['submitdfhdfgd']))
                             'role' => 'customer'
                         ));
 
+                        //$lastid = $wpdb->insert_id;
+
                         $selectgsd = "SELECT * from `".$wpdb->prefix."uap_affiliates` WHERE `uid`='$user_id'";
                         $affiliate_result = $wpdb->get_results($selectgsd,ARRAY_A);
                         if(count($affiliate_result) > 0)
@@ -126,12 +147,10 @@ if(isset($_POST['submitdfhdfgd']))
                             $wpdb->query($change_affilate_gsdrank);
                         }
 
-
                         foreach( $meta as $key => $val ) {
                             update_user_meta( $user_id, $key, $val ); 
                         }
                 
-                           
                       
                     }
 
@@ -139,7 +158,6 @@ if(isset($_POST['submitdfhdfgd']))
 
             $key++;
         }
-       
 
 
         // $files = fopen($_FILES['csvfile']['tmp_name'], "r");
