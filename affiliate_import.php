@@ -3,7 +3,6 @@ include 'wp-config.php';
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
-
 global $wpdb;
 if(current_user_can( 'manage_options' ) ) {
 
@@ -61,7 +60,11 @@ if(isset($_POST['submitdfhdfgd']))
                     $affiliate_since = $affiliate_data[10];
                     $upline = $affiliate_data[11];
 
-                    if($user_login == '' || $name == '' || !is_numeric($user_login))
+                    // if($user_login == '' || $name == '' || !is_numeric($user_login))
+                    // {
+                    //     continue;
+                    // }
+                    if($user_login == '' || $name == '')
                     {
                         continue;
                     }
@@ -99,11 +102,24 @@ if(isset($_POST['submitdfhdfgd']))
                         
                     }
 
+                    
+                       
                     $get_country_code = substr($user_login, 0, 2);
-                    $phone_number = substr($user_login, 2);
+                    if($get_country_code == 60)
+                    {
+                        $phone_number = substr($user_login, 2);
+                    }
+                    else
+                    {
+                        $phone_number = $user_login;
+                    }
+                    
+                    
+                   
 
                     $country_code = "+".$get_country_code;
-                    $digits_phone = "+".$user_login;
+                    $country_code = "+60";
+                    $digits_phone = "+60".$phone_number;
 
 
                     $meta = array(
@@ -114,8 +130,7 @@ if(isset($_POST['submitdfhdfgd']))
                         "digits_phone"=>$digits_phone,
                         "digt_countrycode"=>$country_code,
                         "digits_phone_no"=>$phone_number
-                    );
-
+                    );        
                   
                    
                     $check_user_register = "SELECT * from ".$wpdb->prefix."users where user_login='$user_login'";
@@ -160,19 +175,21 @@ if(isset($_POST['submitdfhdfgd']))
         }
 
 
-        // $files = fopen($_FILES['csvfile']['tmp_name'], "r");
+        $file = fopen($_FILES['csvfile']['tmp_name'],"r");
         $key1=0;
         $headerLine1 = true;
         while(($affiliate_data_hwe =fgetcsv($file, 1000, ",")) !== FALSE)
         {
-
-        
             if($headerLine1) { $headerLine1 = false; }
             else 
             {
+                $upline_affiliate_id =0;
+
                 $affiliate_id = $affiliate_data_hwe[0];
 
                 $get_user_id_by_affiliate_id = "SELECT * from ".$wpdb->prefix."usermeta where meta_key='affiliate_id' && meta_value='$affiliate_id'";
+                
+               
                 $results = $wpdb->get_results($get_user_id_by_affiliate_id,ARRAY_A);
                 foreach($results as $results_hwe)
                 {
@@ -180,10 +197,27 @@ if(isset($_POST['submitdfhdfgd']))
                 }
 
                 $upline_id = $affiliate_data_hwe[11];
-                preg_match_all('!\d+!', $upline_id, $upline_idhwe);
-                $upline_affiliate_id =(int)$upline_idhwe[0][0];
+                preg_match_all('!\d+!', $affiliate_data_hwe[11], $upline_idhwesdf);
 
-                $get_upline_user_id_by_affiliate_id = "SELECT * from ".$wpdb->prefix."usermeta where meta_key='affiliate_id' && meta_value='$upline_affiliate_id'";
+                if(count($upline_idhwesdf) > 0)
+                {
+                    foreach($upline_idhwesdf as $upline_idhwesdfhwe)
+                    {
+                       $upline_idhwetest = $upline_idhwesdfhwe;
+                       foreach($upline_idhwetest as $upline_idhwetesthwe1)
+                       {
+                         $upline_affiliate_id = $upline_idhwetesthwe1;
+                       }
+                    }
+                }
+                //$upline_affiliate_id =$upline_idhwetest[0];
+
+                if($upline_affiliate_id == 0)
+                {
+                    continue;
+                }
+            
+                $get_upline_user_id_by_affiliate_id = "SELECT * from ".$wpdb->prefix."usermeta where meta_key='affiliate_upline_id' && meta_value='$upline_affiliate_id'";
                 $results1 = $wpdb->get_results($get_upline_user_id_by_affiliate_id,ARRAY_A);
                 if(count($results1) > 0)
                 {
@@ -198,17 +232,44 @@ if(isset($_POST['submitdfhdfgd']))
 
                 if($user_id != '' && $upline_user_id != '')
                 {
-                    $select_upline = "SELECT * from ".$wpdb->prefix."uap_affiliate_referral_users_relations where affiliate_id='$user_id' && referral_wp_uid='$upline_user_id'";
+                    $select_affiliate_datahwe = "SELECT * from ".$wpdb->prefix."uap_affiliates where uid='$user_id'";
+
+                    $result_affiliate_hwe = $wpdb->get_results($select_affiliate_datahwe,ARRAY_A);
+                    foreach($result_affiliate_hwe as $result_affiliate_hwe_hwe)
+                    {
+                        $affiliate_id_user = $result_affiliate_hwe_hwe['id'];
+                    }
+                    $select_affiliate_datahwe_upline = "SELECT * from ".$wpdb->prefix."uap_affiliates where uid='$upline_user_id'";
+
+                    $result_affiliate_hwe_upline = $wpdb->get_results($select_affiliate_datahwe_upline,ARRAY_A);
+                    foreach($result_affiliate_hwe_upline as $result_affiliate_hwe_upline_hwe)
+                    {
+                        $upline_affiliate_id_user = $result_affiliate_hwe_upline_hwe['id'];
+                    }
+
+                    $select_upline = "SELECT * from ".$wpdb->prefix."uap_affiliate_referral_users_relations where affiliate_id='$affiliate_id_user' && referral_wp_uid='$user_id'";
                     $get_upline_records = $wpdb->get_results($select_upline,ARRAY_A);
                     if(count($get_upline_records) <= 0)
                     {
-                        $make_upline_refferal  = "INSERT INTO ".$wpdb->prefix."uap_affiliate_referral_users_relations SET affiliate_id='$user_id',referral_wp_uid='$upline_user_id',DATE='$date'";
+                        $make_upline_refferal  = "INSERT INTO ".$wpdb->prefix."uap_affiliate_referral_users_relations SET affiliate_id='$affiliate_id_user',referral_wp_uid='$user_id',DATE='$date'";
                         $wpdb->query($make_upline_refferal);
+                        
+                    }
+                    $select_upline_data = "SELECT * from ".$wpdb->prefix."uap_affiliate_referral_users_relations where affiliate_id='$upline_affiliate_id_user' && referral_wp_uid='$upline_user_id'";
+                    $get_upline_records_data = $wpdb->get_results($select_upline_data,ARRAY_A);
+                    if(count($get_upline_records_data) <= 0)
+                    {
+                        $make_upline_refferal_data  = "INSERT INTO ".$wpdb->prefix."uap_affiliate_referral_users_relations SET affiliate_id='$upline_affiliate_id_user',referral_wp_uid='$upline_user_id',DATE='$date'";
+                        $wpdb->query($make_upline_refferal_data);
 
                         
                     }
-
-
+                    $delete_data = "DELETE from ".$wpdb->prefix."uap_mlm_relations where affiliate_id='$affiliate_id_user'";
+                   $wpdb->query($delete_data);
+                    $sql_data = "INSERT INTO ".$wpdb->prefix."uap_mlm_relations
+                    (`affiliate_id`,`parent_affiliate_id`) 
+                   values ($affiliate_id_user, $upline_affiliate_id_user)";
+                   $wpdb->query($sql_data);
                     // $selectgsd = "SELECT * from `".$wpdb->prefix."uap_affiliates` WHERE `uid`='$user_id'";
                     // $affiliate_result = $wpdb->get_results($selectgsd,ARRAY_A);
                     // if(count($affiliate_result) > 0)
